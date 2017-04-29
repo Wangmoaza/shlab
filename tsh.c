@@ -2,6 +2,8 @@
  * tsh - A tiny shell program with job control
  * 
  * <Put your name and login ID here>
+ * Ha-Eun Hwangbo
+ * 2013-10892
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +87,17 @@ void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
 
+
+/* wrapper functions for safe system call */
+pid_t Fork(void);
+pid_t Waitpid(pid_t pid, int *iptr, int options);
+void Kill(pid_t pid, int signum);
+void Setpgid(pid_t pid, pid_t pgid);
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+void Sigemptyset(sigset_t *set);
+void Sigaddset(sigset_t *set, int signum);
+
+
 /*
  * main - The shell's main routine 
  */
@@ -165,6 +178,66 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS]; // argument list
+    char buf[MAXLINE];  // modified command line
+    int bg; // nonzero - bg, zero - fg
+    pid_t pid;
+    sigset_t mask;
+
+    strcpy(buf, cmdline); // copy cmdline -> buf
+    bg = parseline(buf, argv);
+    if (argv[0] == NULL)
+        return; // ignore empty lines
+
+    /* initialize set & add SIGCHILD to set */
+    Sigemptyset(&mask);
+    Sigaddset(&mask, SIGCHILD);
+
+    /* if not built-in cmd, fork child process & run the job in child */
+    if (!builtin_cmd(argv))
+    {
+        /*
+         * parent must use sigprocmask to block SIGCHILD signal before it forks the child
+         * and unblock these signals, again using sigprocmask
+         * after it adds the child to the job list by calling addjob
+        */
+        Sigprocmask(SIG_BLOCK, &mask, NULL);
+
+        /*
+         * puts the child in a new process group whose group ID is identical to the child's PID.
+         * This ensures that there will be only 1 procss, your shell, in the fg process group.
+        */
+        Setpgid(0, 0);
+
+        if ((pid = Fork()) == 0) // if child
+        {
+            /* since children inherit the blocked vectors of their parents,
+             * the child must be sure to then unblock SIGCHILD signals before it execs new prog
+            */
+            Sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+            if (execve(argv[0], argv, environ) < 0)
+            {
+                printf("%s: Command Not Found.\n", argv[0]);
+                exit(0);
+            }
+        }
+
+        // if parent
+        if (!bg) // foreground
+        {
+            addjob(jobs, pid, FG, cmdline); // add job to job list
+            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // Unblock SIGCHILD signal
+            waitfg(pid);
+        }
+
+        else // background
+        {
+            addjob(jobs, pid, BG, cmdline); // add job to job list
+            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // unblock SIGCHILD signal
+            printf("[%d] (%d) %s\n", pid2jid(pid), pid, cmdline);
+        }
+    }
     return;
 }
 
@@ -506,4 +579,58 @@ void sigquit_handler(int sig)
 }
 
 
+/***********************
+ * Wrapper functions for syscall
+ ***********************/
 
+pid_t Fork(void) 
+{
+    pid_t pid;
+    if ((pid = fork()) < 0)
+        unix_error("Fork error");
+    return pid;
+}
+
+pid_t Waitpid(pid_t pid, int *iptr, int options) 
+{
+    pid_t retpid;
+    if ((retpid  = waitpid(pid, iptr, options)) < 0) 
+        unix_error("Waitpid error");
+    return(retpid);
+}
+
+void Kill(pid_t pid, int signum) 
+{
+    int rc;
+    if ((rc = kill(pid, signum)) < 0)
+        unix_error("Kill error");
+}
+
+void Setpgid(pid_t pid, pid_t pgid) 
+{
+    int rc;
+    if ((rc = setpgid(pid, pgid)) < 0)
+        unix_error("Setpgid error");
+    return;
+}
+
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+    if (sigprocmask(how, set, oldset) < 0)
+        unix_error("Sigprocmask error");
+    return;
+}
+
+void Sigemptyset(sigset_t *set)
+{
+    if (sigemptyset(set) < 0)
+        unix_error("Sigemptyset error");
+    return;
+}
+
+void Sigaddset(sigset_t *set, int signum)
+{
+    if (sigaddset(set, signum) < 0)
+        unix_error("Sigaddset error");
+    return;
+}
