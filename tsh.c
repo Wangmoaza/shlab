@@ -318,7 +318,7 @@ int builtin_cmd(char **argv)
         do_bgfg(argv);
         return 1;
     }
-    
+
     return 0;     /* not a builtin command */
 }
 
@@ -335,6 +335,10 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    // use a busy loop around the sleep function
+    while (pid == fgpid(jobs))
+        sleep(1);
+
     return;
 }
 
