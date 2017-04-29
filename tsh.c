@@ -189,15 +189,15 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    /* initialize set & add SIGCHILD to set */
+    /* initialize set & add SIGCHLD to set */
     Sigemptyset(&mask);
-    Sigaddset(&mask, SIGCHILD);
+    Sigaddset(&mask, SIGCHLD);
 
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
         /*
-         * parent must use sigprocmask to block SIGCHILD signal before it forks the child
+         * parent must use sigprocmask to block SIGCHLD signal before it forks the child
          * and unblock these signals, again using sigprocmask
          * after it adds the child to the job list by calling addjob
         */
@@ -212,7 +212,7 @@ void eval(char *cmdline)
         if ((pid = Fork()) == 0) // if child
         {
             /* since children inherit the blocked vectors of their parents,
-             * the child must be sure to then unblock SIGCHILD signals before it execs new prog
+             * the child must be sure to then unblock SIGCHLD signals before it execs new prog
             */
             Sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
@@ -227,14 +227,14 @@ void eval(char *cmdline)
         if (!bg) // foreground
         {
             addjob(jobs, pid, FG, cmdline); // add job to job list
-            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // Unblock SIGCHILD signal
+            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // Unblock SIGCHLD signal
             waitfg(pid);
         }
 
         else // background
         {
             addjob(jobs, pid, BG, cmdline); // add job to job list
-            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // unblock SIGCHILD signal
+            Sigprocmask(SIG_UNBLOCK, &mask, NULL); // unblock SIGCHLD signal
             printf("[%d] (%d) %s\n", pid2jid(pid), pid, cmdline);
         }
     }
