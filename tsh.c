@@ -158,7 +158,6 @@ int main(int argc, char **argv)
 	}
 
 	/* Evaluate the command line */
-	printf("in main before eval\n"); //FIXME delete this
 	eval(cmdline);
 	fflush(stdout);
 	fflush(stdout);
@@ -191,14 +190,14 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    /* initialize set & add SIGCHLD to set */
-    Sigemptyset(&mask);
-    Sigaddset(&mask, SIGCHLD);
-
-    printf("before if\n"); //FIXME delete this
+    if (verbose) printf("before if (!builtin_cmd)\n"); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
+        /* initialize set & add SIGCHLD to set */
+        Sigemptyset(&mask);
+        Sigaddset(&mask, SIGCHLD);
+        
         /*
          * parent must use sigprocmask to block SIGCHLD signal before it forks the child
          * and unblock these signals, again using sigprocmask
@@ -307,10 +306,11 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
-    printf("entering builtin_cmd\n");
+    if (verbose) printf("entering builtin_cmd\n"); //FIXME delete this
+    
     if (!strcmp(argv[0], "quit"))
     {
-        printf("reached builtin_cmd quit\n");
+        if (verbose) printf("reached builtin_cmd quit\n"); //FIXME delete this
         exit(0);
     }
 
@@ -329,7 +329,7 @@ int builtin_cmd(char **argv)
     else if (!strcmp(argv[0], "&")) // ignore
         return 1; 
 
-    printf("should not reach to return 0\n");
+    if (verbose) printf("should not reach to return 0 (not a builtin cmd)\n"); //FIXME delete this
     return 0;     /* not a builtin command */
 }
 
