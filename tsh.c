@@ -190,14 +190,13 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    if (verbose) printf("before if (!builtin_cmd)\n"); //FIXME delete this
+    printf("before if (!builtin_cmd)\n"); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
         /* initialize set & add SIGCHLD to set */
         Sigemptyset(&mask);
         Sigaddset(&mask, SIGCHLD);
-        
         /*
          * parent must use sigprocmask to block SIGCHLD signal before it forks the child
          * and unblock these signals, again using sigprocmask
@@ -205,13 +204,12 @@ void eval(char *cmdline)
         */
         Sigprocmask(SIG_BLOCK, &mask, NULL);
 
-        /*
-         * puts the child in a new process group whose group ID is identical to the child's PID.
-         * This ensures that there will be only 1 procss, your shell, in the fg process group.
-        */
-
         if ((pid = Fork()) == 0) // if child
         {
+            /*
+             * puts the child in a new process group whose group ID is identical to the child's PID.
+             * This ensures that there will be only 1 procss, your shell, in the fg process group.
+            */
             Setpgid(0, 0);
             /* since children inherit the blocked vectors of their parents,
              * the child must be sure to then unblock SIGCHLD signals before it execs new prog
@@ -306,11 +304,11 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
-    if (verbose) printf("entering builtin_cmd\n"); //FIXME delete this
+    printf("entering builtin_cmd\n"); //FIXME delete this
     
     if (!strcmp(argv[0], "quit"))
     {
-        if (verbose) printf("reached builtin_cmd quit\n"); //FIXME delete this
+        printf("reached builtin_cmd quit\n"); //FIXME delete this
         exit(0);
     }
 
@@ -329,7 +327,7 @@ int builtin_cmd(char **argv)
     else if (!strcmp(argv[0], "&")) // ignore
         return 1; 
 
-    if (verbose) printf("should not reach to return 0 (not a builtin cmd)\n"); //FIXME delete this
+    printf("should not reach to return 0 (not a builtin cmd)\n"); //FIXME delete this
     return 0;     /* not a builtin command */
 }
 
@@ -338,6 +336,59 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
+    struct job_t *job;
+    if (argv[1] == NULL)
+    {
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
+
+    /* Is it JID or PID or invalid? */
+    if (isdigit(argv[1][0])) //PID
+    {
+        pid_t pid = atoi(argv[1]);
+        if ((job = getjobpid(jobs, pid)) == NULL)
+        {
+            printf("(%s): No such process\n", argv[1]);
+            return;
+        }
+    }
+
+    else if (argv[1][0] == '%' && isdigit(argv[1][1])) //JID in the form such as "%3"
+    {
+        int jid = atoi(&argv[1][1]);
+        if ((job = getjobjid(jobs, jid)) == NULL)
+        {
+            printf("%s: No such job\n", id);  
+            return;
+        }
+    }
+
+    else // invalid argument
+    {
+        printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+        return;
+    }
+
+    /* change a stopped background job to a running background job */
+    if (!strcmp("bg", argv[0]))
+    {
+        // ST -> BG  : bg command
+        job -> state = BG;
+        Kill(-(job->pid), SIGCONT); // send SIGCNOT signal
+        printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
+        
+    }
+    /* change a stopped/running background job to a running in the foreground */
+    else if (!strcmp("fg", argv[0]))
+    {
+        // ST -> FG  : fg command
+        // BG -> FG  : fg command
+        job -> state = FG;
+        Kill(-(job->pid), SIGCONT); // send SIGCNOT signal
+        waitfg(job->pid);
+    }
+
     return;
 }
 
@@ -347,6 +398,7 @@ void do_bgfg(char **argv)
 void waitfg(pid_t pid)
 {
     // use a busy loop around the sleep function
+    printf("entering waitfg\n"); //FIXME delete this
     while (pid == fgpid(jobs))
         sleep(0);
     return;
