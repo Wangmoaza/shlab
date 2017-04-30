@@ -197,7 +197,6 @@ void eval(char *cmdline)
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
-	printf("should not reach here\n"); //FIXME delete this 
         /*
          * parent must use sigprocmask to block SIGCHLD signal before it forks the child
          * and unblock these signals, again using sigprocmask
@@ -307,7 +306,10 @@ int parseline(const char *cmdline, char **argv)
 int builtin_cmd(char **argv) 
 {
     if (!strcmp(argv[0], "quit"))
+    {
+        printf("reached builtin_cmd quit\n");
         exit(0);
+    }
 
     else if (!strcmp(argv[0], "jobs"))
     {
@@ -324,6 +326,7 @@ int builtin_cmd(char **argv)
     else if (!strcmp(argv[0], "&")) // ignore
         return 1; 
 
+    printf("should not reach to return 0\n");
     return 0;     /* not a builtin command */
 }
 
@@ -341,8 +344,8 @@ void do_bgfg(char **argv)
 void waitfg(pid_t pid)
 {
     // use a busy loop around the sleep function
-    //while (pid == fgpid(jobs))
-    //    sleep(0);
+    while (pid == fgpid(jobs))
+        sleep(0);
     return;
 }
 
