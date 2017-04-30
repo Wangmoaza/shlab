@@ -209,10 +209,10 @@ void eval(char *cmdline)
          * puts the child in a new process group whose group ID is identical to the child's PID.
          * This ensures that there will be only 1 procss, your shell, in the fg process group.
         */
-        Setpgid(0, 0);
 
         if ((pid = Fork()) == 0) // if child
         {
+            Setpgid(0, 0);
             /* since children inherit the blocked vectors of their parents,
              * the child must be sure to then unblock SIGCHLD signals before it execs new prog
             */
