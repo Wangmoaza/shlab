@@ -84,6 +84,7 @@ void listjobs(struct job_t *jobs);
 void usage(void);
 void unix_error(char *msg);
 void app_error(char *msg);
+void sio_error(char s[]);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
 
@@ -335,8 +336,9 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-
-
+    // use a busy loop around the sleep function
+    while (pid == fgpid(jobs))
+        sleep(1);
     return;
 }
 
@@ -353,7 +355,37 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
+    int status;
+    pid_t pid;
+
+    /*
+     * reap as many zombie children as possible each time it is invoked
+     * WNOHANG | WUNTRACED : return immediately, with a return value of 0,
+     * if none of the children in the wait set has stopped or terminated,
+     * or with a retrun value PID of one of the stopped/terminated children
+    */
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED) > 0))
+    {
+        // returns true if the child terminated normally, 
+        // via a call to exit or a return
+        if (WIFEXITED(status))
+            deletejob(jobs, pid);
+
+        // returns true if the child process terminated because of a signal
+        // that was not caught
+        else if (WIFSIGNALED(status))
+            deletejob(jobs, pid);
+
+        // returns true if the child that caused the return is currently stopped
+        else if (WIFSTOPPED(status))
+            getjobpid(jobs, pid) -> state = ST;
+    }
+
+    if (pid < 0 && errno != ECHILD)
+        sio_error("waitpid error");
+
     return;
+
 }
 
 /* 
@@ -363,6 +395,10 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    pid_t pid = fgpid(jobs);
+    if (pid != 0)
+        Kill(-pid, SIGINT); // -pid: send signal to the entire fg process group
+
     return;
 }
 
@@ -373,6 +409,10 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    pid_t pid = fgpid(jobs);
+    if (pid != 0)
+        Kill(-pid, SIGTSTP);
+         
     return;
 }
 
@@ -569,6 +609,14 @@ void app_error(char *msg)
     exit(1);
 }
 
+void sio_error(char s[]) /* Put error message and exit */
+{
+    int len = 0;
+    while (s[len] != '\0')
+        ++len;
+
+    return write(STDOUT_FILENO, s, sio_strlen(s));
+}
 /*
  * Signal - wrapper for the sigaction function
  */
