@@ -158,6 +158,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Evaluate the command line */
+	printf("in main before eval\n"); //FIXME delete this
 	eval(cmdline);
 	fflush(stdout);
 	fflush(stdout);
@@ -194,6 +195,7 @@ void eval(char *cmdline)
     Sigemptyset(&mask);
     Sigaddset(&mask, SIGCHLD);
 
+    printf("before if\n"); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
@@ -305,6 +307,7 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+    printf("entering builtin_cmd\n");
     if (!strcmp(argv[0], "quit"))
     {
         printf("reached builtin_cmd quit\n");
