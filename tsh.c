@@ -412,7 +412,7 @@ void sigtstp_handler(int sig)
     pid_t pid = fgpid(jobs);
     if (pid != 0)
         Kill(-pid, SIGTSTP);
-         
+
     return;
 }
 
@@ -615,7 +615,8 @@ void sio_error(char s[]) /* Put error message and exit */
     while (s[len] != '\0')
         ++len;
 
-    return write(STDOUT_FILENO, s, sio_strlen(s));
+    write(STDOUT_FILENO, s, len);
+    return;
 }
 /*
  * Signal - wrapper for the sigaction function
