@@ -84,6 +84,7 @@ void listjobs(struct job_t *jobs);
 void usage(void);
 void unix_error(char *msg);
 void app_error(char *msg);
+ssize_t sio_puts(char s[]);
 void sio_error(char s[]);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
@@ -400,7 +401,7 @@ void waitfg(pid_t pid)
     // use a busy loop around the sleep function
     printf("entering waitfg\n"); //FIXME delete this
     while (pid == fgpid(jobs))
-        sleep(0);
+        sleep(1);
     return;
 }
 
@@ -671,13 +672,17 @@ void app_error(char *msg)
     exit(1);
 }
 
-void sio_error(char s[]) /* Put error message and exit */
+ssize_t sio_puts(char s[])
 {
     int len = 0;
     while (s[len] != '\0')
         ++len;
+    return write(STDOUT_FILENO, s, len);
+}
 
-    write(STDOUT_FILENO, s, len);
+void sio_error(char s[]) /* Put error message */
+{
+    sio_puts(s);
     return;
 }
 /*
