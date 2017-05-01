@@ -359,7 +359,7 @@ void do_bgfg(char **argv)
         int jid = atoi(&argv[1][1]);
         if ((job = getjobjid(jobs, jid)) == NULL)
         {
-            printf("%s: No such job\n", id);  
+            printf("%s: No such job\n", argv[1]);  
             return;
         }
     }
@@ -677,7 +677,7 @@ void sio_error(char s[]) /* Put error message and exit */
     while (s[len] != '\0')
         ++len;
 
-    ssize_t size = write(STDOUT_FILENO, s, len);
+    write(STDOUT_FILENO, s, len);
     return;
 }
 /*
