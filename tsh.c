@@ -191,7 +191,7 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    printf("before if (!builtin_cmd)\n"); //FIXME delete this
+    printf("before if (!builtin_cmd), argv[0]: %s\n", argv[0]); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
@@ -400,8 +400,15 @@ void waitfg(pid_t pid)
 {
     // use a busy loop around the sleep function
     printf("entering waitfg\n"); //FIXME delete this
-    while (pid == fgpid(jobs))
-        sleep(1);
+    while (1) {
+        if (pid != fgpid(jobs)) {
+            if (verbose) printf("waitfg: Process (%d) no longer the fg process\n", (int) pid);
+            break;
+        } else {
+            sleep(1);
+        }
+    }
+    printf("exiting waitfg\n"); //FIXME delete this
     return;
 }
 
@@ -432,16 +439,24 @@ void sigchld_handler(int sig)
         // returns true if the child terminated normally, 
         // via a call to exit or a return
         if (WIFEXITED(status))
+	{
             deletejob(jobs, pid);
-
+	}
         // returns true if the child process terminated because of a signal
         // that was not caught
         else if (WIFSIGNALED(status))
+	{
             deletejob(jobs, pid);
-
+            //FIXME make it signal safe
+            printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+	}
         // returns true if the child that caused the return is currently stopped
         else if (WIFSTOPPED(status))
+	{
             getjobpid(jobs, pid) -> state = ST;
+            //FIXME make it signal safe
+            printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WSTOPSIG(status));
+	}
     }
 
     if (pid < 0 && errno != ECHILD)
