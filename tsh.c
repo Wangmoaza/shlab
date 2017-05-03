@@ -191,7 +191,7 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    printf("before if (!builtin_cmd), argv[0]: %s\n", argv[0]); //FIXME delete this
+    //printf("before if (!builtin_cmd), argv[0]: %s\n", argv[0]); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
@@ -305,11 +305,11 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
-    printf("entering builtin_cmd\n"); //FIXME delete this
+    //printf("entering builtin_cmd\n"); //FIXME delete this
     
     if (!strcmp(argv[0], "quit"))
     {
-        printf("reached builtin_cmd quit\n"); //FIXME delete this
+        //printf("reached builtin_cmd quit\n"); //FIXME delete this
         exit(0);
     }
 
@@ -328,7 +328,7 @@ int builtin_cmd(char **argv)
     else if (!strcmp(argv[0], "&")) // ignore
         return 1; 
 
-    printf("should not reach to return 0 (not a builtin cmd)\n"); //FIXME delete this
+    //printf("reached return 0 (not a builtin cmd)\n"); //FIXME delete this
     return 0;     /* not a builtin command */
 }
 
@@ -399,16 +399,12 @@ void do_bgfg(char **argv)
 void waitfg(pid_t pid)
 {
     // use a busy loop around the sleep function
-    printf("entering waitfg\n"); //FIXME delete this
-    while (1) {
-        if (pid != fgpid(jobs)) {
-            if (verbose) printf("waitfg: Process (%d) no longer the fg process\n", (int) pid);
-            break;
-        } else {
-            sleep(1);
-        }
-    }
-    printf("exiting waitfg\n"); //FIXME delete this
+    //printf("entering waitfg\n"); //FIXME delete this
+    
+    while (pid == fgpid(jobs))
+	sleep(1);
+    
+    //printf("exiting waitfg\n"); //FIXME delete this
     return;
 }
 
@@ -427,28 +423,35 @@ void sigchld_handler(int sig)
 {
     int status;
     pid_t pid;
-
+    
+    //sio_error("enetering sigchld_handler\n"); //FIXME delete this
     /*
      * reap as many zombie children as possible each time it is invoked
      * WNOHANG | WUNTRACED : return immediately, with a return value of 0,
      * if none of the children in the wait set has stopped or terminated,
      * or with a retrun value PID of one of the stopped/terminated children
     */
-    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED) > 0))
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
     {
         // returns true if the child terminated normally, 
         // via a call to exit or a return
         if (WIFEXITED(status))
 	{
+            //sio_error("WIFXEITED\n"); //FIXME delete this
+            //listjobs(jobs); //FIXME delete this
             deletejob(jobs, pid);
+            //listjobs(jobs); //FIXME delete this
 	}
         // returns true if the child process terminated because of a signal
         // that was not caught
         else if (WIFSIGNALED(status))
 	{
+            //sio_error("WIFSIGNALED\n"); //FIXME delete this
+            //listjobs(jobs); //FIXME delete this
             deletejob(jobs, pid);
+            //listjobs(jobs); //FIXME delete this 
             //FIXME make it signal safe
-            printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+            //printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
 	}
         // returns true if the child that caused the return is currently stopped
         else if (WIFSTOPPED(status))
@@ -459,9 +462,7 @@ void sigchld_handler(int sig)
 	}
     }
 
-    if (pid < 0 && errno != ECHILD)
-        sio_error("waitpid error");
-
+    //sio_error("exiting sigchld handler\n"); //FIXME delete this
     return;
 
 }
@@ -473,10 +474,12 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    //sio_error("enetering sigint handler\n"); //FIXME delete this
     pid_t pid = fgpid(jobs);
     if (pid != 0)
         Kill(-pid, SIGINT); // -pid: send signal to the entire fg process group
 
+    //sio_error("exiting sigint handler\n"); //FIXME delete this
     return;
 }
 
@@ -487,10 +490,12 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    //sio_error("entering sigstp handler\n"); //FIXME delete this
     pid_t pid = fgpid(jobs);
     if (pid != 0)
         Kill(-pid, SIGTSTP);
 
+    //sio_error("exiting sigstp handler\n"); //FIXME delete this
     return;
 }
 
