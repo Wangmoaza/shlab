@@ -191,7 +191,6 @@ void eval(char *cmdline)
     if (argv[0] == NULL)
         return; // ignore empty lines
 
-    //printf("before if (!builtin_cmd), argv[0]: %s\n", argv[0]); //FIXME delete this
     /* if not built-in cmd, fork child process & run the job in child */
     if (!builtin_cmd(argv))
     {
@@ -219,7 +218,7 @@ void eval(char *cmdline)
 
             if (execve(argv[0], argv, environ) < 0)
             {
-                printf("%s: Command Not Found.\n", argv[0]);
+                printf("%s: Command Not Found\n", argv[0]);
                 exit(0);
             }
         }
@@ -236,7 +235,7 @@ void eval(char *cmdline)
         {
             addjob(jobs, pid, BG, cmdline); // add job to job list
             Sigprocmask(SIG_UNBLOCK, &mask, NULL); // unblock SIGCHLD signal
-            printf("[%d] (%d) %s\n", pid2jid(pid), pid, cmdline);
+            printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
         }
     }
     return;
@@ -305,11 +304,8 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
-    //printf("entering builtin_cmd\n"); //FIXME delete this
-    
     if (!strcmp(argv[0], "quit"))
     {
-        //printf("reached builtin_cmd quit\n"); //FIXME delete this
         exit(0);
     }
 
@@ -328,7 +324,6 @@ int builtin_cmd(char **argv)
     else if (!strcmp(argv[0], "&")) // ignore
         return 1; 
 
-    //printf("reached return 0 (not a builtin cmd)\n"); //FIXME delete this
     return 0;     /* not a builtin command */
 }
 
@@ -433,36 +428,30 @@ void sigchld_handler(int sig)
     */
     while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0)
     {
+        int jid = pid2jid(pid);
         // returns true if the child terminated normally, 
         // via a call to exit or a return
         if (WIFEXITED(status))
 	{
-            //sio_error("WIFXEITED\n"); //FIXME delete this
-            //listjobs(jobs); //FIXME delete this
             deletejob(jobs, pid);
-            //listjobs(jobs); //FIXME delete this
 	}
         // returns true if the child process terminated because of a signal
         // that was not caught
         else if (WIFSIGNALED(status))
 	{
-            //sio_error("WIFSIGNALED\n"); //FIXME delete this
-            //listjobs(jobs); //FIXME delete this
             deletejob(jobs, pid);
-            //listjobs(jobs); //FIXME delete this 
             //FIXME make it signal safe
-            //printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, WTERMSIG(status));
 	}
         // returns true if the child that caused the return is currently stopped
         else if (WIFSTOPPED(status))
 	{
             getjobpid(jobs, pid) -> state = ST;
             //FIXME make it signal safe
-            printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WSTOPSIG(status));
+            printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, WSTOPSIG(status));
 	}
     }
 
-    //sio_error("exiting sigchld handler\n"); //FIXME delete this
     return;
 
 }
