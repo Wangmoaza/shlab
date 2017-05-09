@@ -6,6 +6,7 @@
  * 2013-10892
  */
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -98,7 +99,7 @@ void Setpgid(pid_t pid, pid_t pgid);
 void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 void Sigemptyset(sigset_t *set);
 void Sigaddset(sigset_t *set, int signum);
-
+void sio_printf(const char *format, ...);
 
 /*
  * main - The shell's main routine 
@@ -218,7 +219,7 @@ void eval(char *cmdline)
 
             if (execve(argv[0], argv, environ) < 0)
             {
-                printf("%s: Command Not Found\n", argv[0]);
+                printf("%s: Command not found\n", argv[0]);
                 exit(0);
             }
         }
@@ -441,14 +442,14 @@ void sigchld_handler(int sig)
 	{
             deletejob(jobs, pid);
             //FIXME make it signal safe
-            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, WTERMSIG(status));
+            sio_printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, WTERMSIG(status));
 	}
         // returns true if the child that caused the return is currently stopped
         else if (WIFSTOPPED(status))
 	{
             getjobpid(jobs, pid) -> state = ST;
             //FIXME make it signal safe
-            printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, WSTOPSIG(status));
+            sio_printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, WSTOPSIG(status));
 	}
     }
 
@@ -631,7 +632,7 @@ void listjobs(struct job_t *jobs)
 		case FG: 
 		    printf("Foreground ");
 		    break;
-		case ST: 
+		case ST:
 		    printf("Stopped ");
 		    break;
 	    default:
@@ -776,3 +777,14 @@ void Sigaddset(sigset_t *set, int signum)
         unix_error("Sigaddset error");
     return;
 }
+
+void sio_printf(const char *format, ...)
+{
+    char buf[500];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    sio_puts(buf);
+}
+

@@ -1,0 +1,97 @@
+./sdriver.pl -t trace13.txt -s ./tsh -a "-p"
+#
+# trace13.txt - Restart every stopped process in process group
+#
+tsh> ./mysplit 4
+Job [1] (31019) stopped by signal 20
+tsh> jobs
+[1] (31019) Stopped ./mysplit 4 
+tsh> /bin/ps a
+  PID TTY      STAT   TIME COMMAND
+ 1243 pts/5    S+     0:00 vi memo.md
+ 1266 hvc0     Ss+    0:00 /sbin/agetty --keep-baud 115200 38400 9600 hvc0 vt220
+ 1278 pts/10   S+     0:00 vi answer_5.txt
+ 1408 pts/6    S+     0:00 vi rtarget_assm
+ 8470 pts/21   Ss     0:00 -bash
+ 8485 pts/22   Ss     0:00 -bash
+ 9186 pts/22   S+     0:00 vi ./trace/trace01.txt
+11732 pts/17   Ss     0:00 -bash
+11747 pts/18   Ss+    0:00 -bash
+11771 pts/17   S+     0:00 man memcpy
+11783 pts/17   S+     0:00 pager
+13036 pts/7    Ss     0:00 -bash
+13051 pts/8    Ss     0:00 -bash
+13066 pts/9    Ss+    0:00 -bash
+13886 tty1     Ss+    0:00 /sbin/agetty --noclear tty1 linux
+16215 pts/21   S+     0:00 ./tsh
+16393 pts/3    Ss     0:00 -bash
+16408 pts/12   Ss+    0:00 -bash
+17624 pts/3    S+     0:00 ./tsh
+18106 pts/14   Ss+    0:00 -bash
+18122 pts/15   Ss     0:00 -bash
+18217 pts/15   S+     0:00 vi ../utils/memlog.h
+25805 pts/1    Ss     0:00 -bash
+25830 pts/2    Ss     0:00 -bash
+26569 pts/11   Ss+    0:00 /bin/bash
+26633 pts/2    S+     0:00 vi ctarget_ass.txt
+26670 pts/1    S+     0:00 vi insertvalue.d
+27001 pts/8    S+     0:00 vi ctarget_ass.txt
+27191 pts/7    S+     0:00 gdb ctarget
+27729 pts/0    Ss     0:00 -bash
+28789 pts/13   Ss+    0:00 -bash
+28836 pts/0    S+     0:04 vi tsh.c
+29959 pts/19   Ss     0:00 -bash
+31014 pts/19   S+     0:00 make test13
+31015 pts/19   S+     0:00 /bin/sh -c ./sdriver.pl -t trace13.txt -s ./tsh -a "-p"
+31016 pts/19   S+     0:00 /usr/bin/perl ./sdriver.pl -t trace13.txt -s ./tsh -a -p
+31017 pts/19   S+     0:00 ./tsh -p
+31019 pts/19   T      0:00 ./mysplit 4
+31020 pts/19   T      0:00 ./mysplit 4
+31023 pts/19   R      0:00 /bin/ps a
+32306 pts/5    Ss     0:00 -bash
+32321 pts/6    Ss     0:00 -bash
+32408 pts/10   Ss     0:00 -bash
+tsh> fg %1
+tsh> /bin/ps a
+  PID TTY      STAT   TIME COMMAND
+ 1243 pts/5    S+     0:00 vi memo.md
+ 1266 hvc0     Ss+    0:00 /sbin/agetty --keep-baud 115200 38400 9600 hvc0 vt220
+ 1278 pts/10   S+     0:00 vi answer_5.txt
+ 1408 pts/6    S+     0:00 vi rtarget_assm
+ 8470 pts/21   Ss     0:00 -bash
+ 8485 pts/22   Ss     0:00 -bash
+ 9186 pts/22   S+     0:00 vi ./trace/trace01.txt
+11732 pts/17   Ss     0:00 -bash
+11747 pts/18   Ss+    0:00 -bash
+11771 pts/17   S+     0:00 man memcpy
+11783 pts/17   S+     0:00 pager
+13036 pts/7    Ss     0:00 -bash
+13051 pts/8    Ss     0:00 -bash
+13066 pts/9    Ss+    0:00 -bash
+13886 tty1     Ss+    0:00 /sbin/agetty --noclear tty1 linux
+16215 pts/21   S+     0:00 ./tsh
+16393 pts/3    Ss     0:00 -bash
+16408 pts/12   Ss+    0:00 -bash
+17624 pts/3    S+     0:00 ./tsh
+18106 pts/14   Ss+    0:00 -bash
+18122 pts/15   Ss     0:00 -bash
+18217 pts/15   S+     0:00 vi ../utils/memlog.h
+25805 pts/1    Ss     0:00 -bash
+25830 pts/2    Ss     0:00 -bash
+26569 pts/11   Ss+    0:00 /bin/bash
+26633 pts/2    S+     0:00 vi ctarget_ass.txt
+26670 pts/1    S+     0:00 vi insertvalue.d
+27001 pts/8    S+     0:00 vi ctarget_ass.txt
+27191 pts/7    S+     0:00 gdb ctarget
+27729 pts/0    Ss     0:00 -bash
+28789 pts/13   Ss+    0:00 -bash
+28836 pts/0    S+     0:04 vi tsh.c
+29959 pts/19   Ss     0:00 -bash
+31014 pts/19   S+     0:00 make test13
+31015 pts/19   S+     0:00 /bin/sh -c ./sdriver.pl -t trace13.txt -s ./tsh -a "-p"
+31016 pts/19   S+     0:00 /usr/bin/perl ./sdriver.pl -t trace13.txt -s ./tsh -a -p
+31017 pts/19   S+     0:00 ./tsh -p
+31026 pts/19   R      0:00 /bin/ps a
+32306 pts/5    Ss     0:00 -bash
+32321 pts/6    Ss     0:00 -bash
+32408 pts/10   Ss     0:00 -bash
